@@ -11,3 +11,6 @@ venv/
 
 # Local SQLite database
 stocksetu_test.db
+
+#node
+node_modules/
