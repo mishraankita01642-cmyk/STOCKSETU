@@ -4,40 +4,75 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 const app = express();
-
+app.get("/test", (req, res) => {
+  res.send("TEST WORKS");
+});
 app.use(cors());
 app.use(express.json());
 
-// Connect to SQLite Database
-const dbPath = path.join(__dirname, "database", "inventory.db");
+/* =========================
+   DATABASE CONNECTION
+========================= */
+
+const dbPath = path.join(
+  __dirname,
+  "database",
+  "inventory.db"
+);
 
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error("Database connection failed:", err.message);
+    console.error(
+      "Database connection failed:",
+      err.message
+    );
   } else {
-    console.log("Connected to SQLite Database");
+    console.log(
+      "Connected to SQLite Database"
+    );
   }
 });
 
-// Home Route
+/* =========================
+   TEST ROUTE
+========================= */
+
+app.get("/test", (req, res) => {
+  res.send("TEST ROUTE WORKING");
+});
+
+/* =========================
+   HOME ROUTE
+========================= */
+
 app.get("/", (req, res) => {
   res.send("Warehouse Backend Running");
 });
 
-// Get all products
-app.get("/api/products", (req, res) => {
-  db.all("SELECT * FROM products", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({
-        error: err.message
-      });
-    }
+/* =========================
+   GET ALL PRODUCTS
+========================= */
 
-    res.json(rows);
-  });
+app.get("/api/products", (req, res) => {
+  db.all(
+    "SELECT * FROM products",
+    [],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: err.message
+        });
+      }
+
+      res.json(rows);
+    }
+  );
 });
 
-// Get product by ID
+/* =========================
+   GET PRODUCT BY ID
+========================= */
+
 app.get("/api/products/:id", (req, res) => {
   db.get(
     "SELECT * FROM products WHERE id = ?",
@@ -60,7 +95,12 @@ app.get("/api/products/:id", (req, res) => {
   );
 });
 
-// Search products
+/* =========================
+   SEARCH PRODUCT BY NAME
+========================= */
+
+console.log("SEARCH ROUTE LOADED");
+
 app.get("/api/search/:name", (req, res) => {
   const searchTerm = `%${req.params.name}%`;
 
@@ -79,7 +119,10 @@ app.get("/api/search/:name", (req, res) => {
   );
 });
 
-// Status Check
+/* =========================
+   STATUS ROUTE
+========================= */
+
 app.get("/api/status", (req, res) => {
   res.json({
     status: "Running",
@@ -88,8 +131,13 @@ app.get("/api/status", (req, res) => {
   });
 });
 
+/* =========================
+   SERVER START
+========================= */
+
 const PORT = 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
+
