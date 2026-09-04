@@ -2,13 +2,13 @@ import sqlite3
 
 def setup_mock_database():
     """Creates a temporary in-memory SQLite database for testing."""
-    # Using ':memory:' keeps everything in RAM without touching disk
+   
     conn = sqlite3.connect(':memory:')
     # Enable dict-like column access
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    # 1. Create Tables
+    
     cursor.executescript('''
         CREATE TABLE products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,7 +43,7 @@ def setup_mock_database():
         );
     ''')
 
-    # 2. Seed Mock Data
+    
     cursor.executescript('''
         INSERT INTO products (id, sku, name) VALUES 
             (1, 'MOUSE-01', 'Wireless Mouse'),
@@ -61,9 +61,6 @@ def setup_mock_database():
     conn.commit()
     return conn
 
-# ==========================================
-# YOUR CORE BUSINESS LOGIC (PERSON 4b)
-# ==========================================
 
 def process_order_fulfillment(conn, order_items):
     """
@@ -74,13 +71,13 @@ def process_order_fulfillment(conn, order_items):
     pick_list = []
 
     try:
-        # Use Python context manager for atomic database transaction
+        
         with conn:
             for item in order_items:
                 product_id = item['product_id']
                 requested_qty = item['qty']
 
-                # Find available stock and exact bin coordinates
+                
                 cursor.execute('''
                     SELECT s.product_id, s.location_id, s.quantity, p.name AS product_name, 
                            l.location_code, l.row_number, l.bin_number
@@ -105,7 +102,7 @@ def process_order_fulfillment(conn, order_items):
                     "qty_to_pick": requested_qty
                 })
 
-                # 2. Reduce stock balance
+                
                 cursor.execute('''
                     UPDATE stock 
                     SET quantity = quantity - ? 
@@ -124,9 +121,7 @@ def process_order_fulfillment(conn, order_items):
         conn.rollback()
         raise e
 
-# ==========================================
-# RUN INDEPENDENT TESTS
-# ==========================================
+ 
 if __name__ == "__main__":
     conn = setup_mock_database()
     print("--- STARTING PYTHON ORDER PICK GENERATOR TEST ---\n")
@@ -164,4 +159,4 @@ if __name__ == "__main__":
     try:
         process_order_fulfillment(conn, [{"product_id": 1, "qty": 100}])
     except ValueError as err:
-        print(f"✅ Handled correctly: {err}")
+        print(f"✅ Handled correctly: {err}")   
