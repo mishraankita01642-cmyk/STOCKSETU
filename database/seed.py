@@ -258,11 +258,11 @@ def create_products(connection):
 
     SKU format:
 
-        SH0001
-        SH0002
-        SH0003
+        SS0001
+        SS0002
+        SS0003
         ...
-        SH0750
+        SS0750
     """
 
     categories = list(PRODUCT_TEMPLATES.keys())
