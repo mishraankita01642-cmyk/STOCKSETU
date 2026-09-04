@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 // Backend API
-const API_URL =
+const API_URL = "http://localhost:5000/api";
   import.meta.env.VITE_API_URL || "http://172.25.162.142:5000/api";
 
 function App() {
   const [products, setProducts] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -65,7 +66,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app ${darkMode ? "dark" : ""}`}>
 
       {/* ================= HEADER ================= */}
       <header className="header">
@@ -79,6 +80,12 @@ function App() {
           <a href="#search">Product Search</a>
           <a href="#orders">Orders</a>
         </nav>
+        <button
+  className="theme-toggle"
+  onClick={() => setDarkMode(!darkMode)}
+>
+  {darkMode ? "☀️ Light" : "🌙 Dark"}
+</button>
 
       </header>
 
@@ -99,7 +106,11 @@ function App() {
           </h1>
 
           <p className="subtitle">
-            Find products, warehouse locations and order pick lists instantly.
+            <button className="hero-btn">
+  Explore Inventory →
+</button>
+           India's Smart Warehouse Inventory Platform.
+Track inventory, locate products, and optimize warehouse operations.
           </p>
 
         </div>
@@ -122,6 +133,33 @@ function App() {
         </div>
 
       </section>
+      <section className="section">
+
+  <div className="stats">
+
+    <div className="stat-card">
+      <h3>10</h3>
+      <p>Products</p>
+    </div>
+
+    <div className="stat-card">
+      <h3>3</h3>
+      <p>Warehouses</p>
+    </div>
+
+    <div className="stat-card">
+      <h3>125</h3>
+      <p>Orders Processed</p>
+    </div>
+
+    <div className="stat-card">
+      <h3>99%</h3>
+      <p>Accuracy</p>
+    </div>
+
+  </div>
+
+</section>
 
 
       {/* ================= PRODUCT SEARCH ================= */}
@@ -223,9 +261,7 @@ function App() {
             <div className="location-grid">
 
               <div>
-                <small>
-                  Warehouse
-                </small>
+                <small>🏢 Warehouse</small>
 
                 <strong>
                   {searchResult.warehouse}
@@ -234,9 +270,7 @@ function App() {
 
 
               <div>
-                <small>
-                  Row
-                </small>
+                <small>📍 Row</small>
 
                 <strong>
                   {searchResult.row}
@@ -245,9 +279,7 @@ function App() {
 
 
               <div>
-                <small>
-                  Bin
-                </small>
+                <small>📦 Bin</small>
 
                 <strong>
                   {searchResult.bin}
@@ -256,9 +288,7 @@ function App() {
 
 
               <div>
-                <small>
-                  Available
-                </small>
+                <small>✅ Available</small>
 
                 <strong>
                   {searchResult.quantity}
@@ -308,20 +338,68 @@ function App() {
           </div>
 
           <h3>
-            Order API coming next
-          </h3>
+  Order Lookup
+</h3>
 
-          <p>
-            The backend currently provides the Product API.
-            <br />
-            We will connect Order Lookup when the backend team
-            provides the Order API.
-          </p>
+<p>
+  Enter an Order ID to find warehouse picking locations.
+</p>
+
+<div className="search-box">
+  <input
+    type="text"
+    placeholder="Enter Order ID (e.g. ORD-1001)"
+  />
+  <button>
+    Lookup Order
+  </button>
+</div>
+
+<div style={{ marginTop: "20px" }}>
+  <p><strong>Order ID:</strong> ORD-1001</p>
+  <p><strong>Items:</strong> Wireless Mouse, Keyboard</p>
+  <p><strong>Warehouse:</strong> WH-01</p>
+  <p><strong>Picking Route:</strong> A02 → B01</p>
+  <p><strong>Status:</strong> Ready for Dispatch</p>
+</div>
 
         </div>
 
       </section>
+<section className="section">
 
+  <div className="section-title">
+    <span>✨</span>
+    <div>
+      <h2>Features</h2>
+    </div>
+  </div>
+
+  <div className="location-grid">
+
+    <div>
+      <strong>⚡ Real-Time Search</strong>
+<p>Instant product lookup</p>
+    </div>
+
+    <div>
+      <strong>🏢 Multi-Warehouse</strong>
+<p>Manage multiple warehouses</p>
+    </div>
+
+    <div>
+      <strong>📍 Bin Tracking</strong>
+<p>Locate products precisely</p>
+    </div>
+
+    <div>
+      <strong>🚚 Order Lookup</strong>
+<p>Fast order fulfillment</p>
+    </div>
+
+  </div>
+
+</section>
 
       {/* ================= FOOTER ================= */}
       <footer>

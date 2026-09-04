@@ -1,0 +1,95 @@
+const express = require("express");
+const cors = require("cors");
+const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Connect to SQLite Database
+const dbPath = path.join(__dirname, "database", "inventory.db");
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error("Database connection failed:", err.message);
+  } else {
+    console.log("Connected to SQLite Database");
+  }
+});
+
+// Home Route
+app.get("/", (req, res) => {
+  res.send("Warehouse Backend Running");
+});
+
+// Get all products
+app.get("/api/products", (req, res) => {
+  db.all("SELECT * FROM products", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({
+        error: err.message
+      });
+    }
+
+    res.json(rows);
+  });
+});
+
+// Get product by ID
+app.get("/api/products/:id", (req, res) => {
+  db.get(
+    "SELECT * FROM products WHERE id = ?",
+    [req.params.id],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({
+          error: err.message
+        });
+      }
+
+      if (!row) {
+        return res.status(404).json({
+          message: "Product not found"
+        });
+      }
+
+      res.json(row);
+    }
+  );
+});
+
+// Search products
+app.get("/api/search/:name", (req, res) => {
+  const searchTerm = `%${req.params.name}%`;
+
+  db.all(
+    "SELECT * FROM products WHERE name LIKE ?",
+    [searchTerm],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({
+          error: err.message
+        });
+      }
+
+      res.json(rows);
+    }
+  );
+});
+
+// Status Check
+app.get("/api/status", (req, res) => {
+  res.json({
+    status: "Running",
+    service: "Warehouse Backend",
+    database: "Connected"
+  });
+});
+
+const PORT = 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
