@@ -283,7 +283,7 @@ def create_products(connection):
 
         name = f"{brand} {product_type} {variant}"
 
-        sku = f"SH{product_id:04d}"
+        sku = f"SS{product_id:04d}"
 
         products.append(
             (
