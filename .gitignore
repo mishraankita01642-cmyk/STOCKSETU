@@ -1,6 +1,13 @@
-stocksetu_test.db
+# Python
 __pycache__/
 *.pyc
+
+# Virtual environments
 .venv/
 venv/
+
+# Environment variables
 .env
+
+# Local SQLite database
+stocksetu_test.db
