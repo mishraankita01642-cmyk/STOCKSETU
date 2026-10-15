@@ -4,13 +4,8 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 // Backend API
-<<<<<<< HEAD
-const API_URL = "http://localhost:5000/api";
+   const API_URL = "/api";
   import.meta.env.VITE_API_URL || "http://172.25.162.142:5000/api";
-=======
-const API_URL =
-  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL;
->>>>>>> e2fe9a4fa0f7b6b6c9eaf176ff4ba90ab7fee4d2
 
 function App() {
   const [products, setProducts] = useState([]);
