@@ -24,16 +24,16 @@ def process_order_fulfillment(conn, order_items):
                 product_id = item["product_id"]
                 requested_qty = item["qty"]
 
-                # Fetch all columns from locations to avoid missing column errors
                 cursor.execute(
                     """
-                    SELECT i.product_id, i.location_id, i.quantity, p.name AS product_name, l.*
+                    SELECT i.product_id, i.location_id, i.quantity,
+                           p.name AS product_name, l.*
                     FROM inventory i
                     JOIN products p ON i.product_id = p.id
                     JOIN locations l ON i.location_id = l.id
                     WHERE i.product_id = ? AND i.quantity >= ?
                     LIMIT 1
-                """,
+                    """,
                     (product_id, requested_qty),
                 )
 
@@ -44,11 +44,13 @@ def process_order_fulfillment(conn, order_items):
                         f"Insufficient stock for Product ID: {product_id}"
                     )
 
-                # Safely resolve location code across schema variations
                 rec_dict = dict(stock_record)
+
                 loc_code = rec_dict.get(
                     "location_code",
-                    f"{rec_dict.get('zone', 'WH')}-{rec_dict.get('aisle', rec_dict.get('row_number', '0'))}-{rec_dict.get('shelf', rec_dict.get('bin_number', '0'))}",
+                    f"{rec_dict.get('zone', 'WH')}-"
+                    f"{rec_dict.get('aisle', rec_dict.get('row_number', '0'))}-"
+                    f"{rec_dict.get('shelf', rec_dict.get('bin_number', '0'))}"
                 )
 
                 pick_list.append({
@@ -60,20 +62,33 @@ def process_order_fulfillment(conn, order_items):
                 # Deduct inventory
                 cursor.execute(
                     """
-                    UPDATE inventory 
-                    SET quantity = quantity - ? 
+                    UPDATE inventory
+                    SET quantity = quantity - ?
                     WHERE product_id = ? AND location_id = ?
-                """,
+                    """,
                     (requested_qty, product_id, stock_record["location_id"]),
                 )
 
-                # Log movement audit
+                # Log stock movement
                 cursor.execute(
                     """
-                    INSERT INTO stock_movements (product_id, from_location_id, to_location_id, quantity, movement_type)
-                    VALUES (?, ?, NULL, ?, 'OUTWARD')
-                """,
-                    (product_id, stock_record["location_id"], requested_qty),
+                    INSERT INTO stock_movements
+                    (
+                        product_id,
+                        from_location_id,
+                        to_location_id,
+                        quantity,
+                        movement_type,
+                        timestamp
+                    )
+                    VALUES
+                     (?, ?, NULL, ?, 'PICK', CURRENT_TIMESTAMP)
+                    """,
+                    (
+                        product_id,
+                        stock_record["location_id"],
+                        requested_qty,
+                    ),
                 )
 
         return pick_list
@@ -110,28 +125,35 @@ def read_root():
 
 @app.get("/api/stock")
 def get_current_stock():
-    """Returns current inventory stock levels from inventory.db."""
     conn = get_db()
     cursor = conn.cursor()
+
     try:
-        # Select all columns from locations (l.*) dynamically
-        cursor.execute("""
-            SELECT p.id as product_id, p.name, i.quantity, l.* 
-            FROM inventory i 
-            JOIN products p ON i.product_id = p.id 
+        cursor.execute(
+            """
+            SELECT p.id AS product_id,
+                   p.name,
+                   i.quantity,
+                   l.*
+            FROM inventory i
+            JOIN products p ON i.product_id = p.id
             JOIN locations l ON i.location_id = l.id
             LIMIT 100
-        """)
+            """
+        )
+
         rows = cursor.fetchall()
 
         stock_data = []
+
         for row in rows:
             r = dict(row)
-            # Fallback column lookup
+
             loc_code = r.get(
                 "location_code",
-                f"WH-{r.get('zone', r.get('row_number', 'A'))}-{r.get('shelf', r.get('bin_number', '1'))}",
+                f"WH-{r.get('zone', r.get('row_number', 'A'))}-{r.get('shelf', r.get('bin_number', '1'))}"
             )
+
             stock_data.append({
                 "product_id": r["product_id"],
                 "name": r["name"],
@@ -140,10 +162,13 @@ def get_current_stock():
             })
 
         return {"stock": stock_data}
+
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Database query failed: {str(e)}"
+            status_code=500,
+            detail=f"Database query failed: {str(e)}"
         )
+
     finally:
         conn.close()
 
@@ -151,16 +176,32 @@ def get_current_stock():
 @app.post("/api/generate-pick-list")
 def generate_pick_list(order: OrderRequest):
     conn = get_db()
-    order_items_dict = [item.model_dump() for item in order.items]
+
     try:
-        pick_list = process_order_fulfillment(conn, order_items_dict)
-        return {"success": True, "pick_list": pick_list}
+        order_items_dict = [item.model_dump() for item in order.items]
+
+        pick_list = process_order_fulfillment(
+            conn,
+            order_items_dict,
+        )
+
+        return {
+            "success": True,
+            "pick_list": pick_list,
+        }
+
     except ValueError as err:
-        raise HTTPException(status_code=400, detail=str(err))
+        raise HTTPException(
+            status_code=400,
+            detail=str(err)
+        )
+
     except Exception as err:
         raise HTTPException(
-            status_code=500, detail=f"Server error during processing: {str(err)}"
+            status_code=500,
+            detail=f"Server error during processing: {str(err)}"
         )
+
     finally:
         conn.close()
 
@@ -168,4 +209,9 @@ def generate_pick_list(order: OrderRequest):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
