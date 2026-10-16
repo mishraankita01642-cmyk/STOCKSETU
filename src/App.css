@@ -406,6 +406,17 @@ body.dark .search-box input::placeholder {
   color: #cbd5e1;
 }
 
+/* Dark-mode text colours: headings and paragraphs read these two variables,
+   so only they change. Orange accents and light-mode colours are untouched. */
+body.dark {
+  --text: #cbd5e1;
+  --text-dark: #f1f5f9;
+}
+
+body.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
 /* ================= MOBILE ================= */
 
 @media(max-width:900px){

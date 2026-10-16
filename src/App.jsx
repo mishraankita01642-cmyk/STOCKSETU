@@ -9,7 +9,16 @@ const API_URL = "/api";
 
 function App() {
   const [products, setProducts] = useState([]);
-  const [darkMode, setDarkMode] = useState(false);
+  // Theme: remembered between visits
+  const [darkMode, setDarkMode] = useState(
+    () => localStorage.getItem("theme") === "dark"
+  );
+
+  // The dark CSS rules start with "body.dark", so put the class on <body>
+  useEffect(() => {
+    document.body.classList.toggle("dark", darkMode);
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -102,11 +111,13 @@ function App() {
           <a href="#orders">Orders</a>
         </nav>
         <button
-  className="theme-toggle"
-  onClick={() => setDarkMode(!darkMode)}
->
-  {darkMode ? "☀️ Light" : "🌙 Dark"}
-</button>
+          className="theme-btn"
+          onClick={() => setDarkMode(!darkMode)}
+          title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label="Toggle theme"
+        >
+          {darkMode ? "☀️" : "🌙"}
+        </button>
 
       </header>
 
