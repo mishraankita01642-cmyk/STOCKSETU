@@ -8,6 +8,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Product + location + stock (shared by all product routes)
+const PRODUCT_QUERY = `
+  SELECT p.id, p.name, p.sku,
+         l.warehouse, l."row" AS row, l.bin,
+         (SELECT SUM(quantity) FROM inventory WHERE product_id = p.id) AS quantity
+  FROM products p
+  LEFT JOIN inventory i ON i.id = (SELECT MIN(id) FROM inventory WHERE product_id = p.id)
+  LEFT JOIN locations l ON l.id = i.location_id
+`;
+
 // Connect to SQLite Database
 const dbPath = path.join(__dirname, "database", "inventory.db");
 
@@ -21,7 +31,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 // Get all products
 app.get("/api/products", (req, res) => {
-  db.all("SELECT * FROM products", [], (err, rows) => {
+  db.all(PRODUCT_QUERY, [], (err, rows) => {
     if (err) {
       return res.status(500).json({
         error: err.message
@@ -35,7 +45,7 @@ app.get("/api/products", (req, res) => {
 // Get product by ID
 app.get("/api/products/:id", (req, res) => {
   db.get(
-    "SELECT * FROM products WHERE id = ?",
+    PRODUCT_QUERY + " WHERE p.id = ?",
     [req.params.id],
     (err, row) => {
       if (err) {
@@ -60,7 +70,7 @@ app.get("/api/search/:name", (req, res) => {
   const searchTerm = `%${req.params.name}%`;
 
   db.all(
-    "SELECT * FROM products WHERE name LIKE ?",
+    PRODUCT_QUERY + " WHERE p.name LIKE ?",
     [searchTerm],
     (err, rows) => {
       if (err) {
