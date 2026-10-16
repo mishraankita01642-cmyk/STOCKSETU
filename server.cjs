@@ -84,6 +84,34 @@ app.get("/api/search/:name", (req, res) => {
   );
 });
 
+// Order lookup: items + where to pick them
+app.get("/api/orders/:orderNumber", (req, res) => {
+  const sql = `
+    SELECT o.order_number, o.status,
+           p.name, oi.quantity AS qty,
+           l.warehouse, l."row" AS row, l.bin
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    JOIN products p ON p.id = oi.product_id
+    LEFT JOIN inventory i ON i.id = (SELECT MIN(id) FROM inventory WHERE product_id = p.id)
+    LEFT JOIN locations l ON l.id = i.location_id
+    WHERE o.order_number = ? COLLATE NOCASE
+    ORDER BY l.bin
+  `;
+
+  db.all(sql, [req.params.orderNumber], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (rows.length === 0) return res.status(404).json({ message: "Order not found" });
+
+    res.json({
+      order_number: rows[0].order_number,
+      status: rows[0].status,
+      route: rows.map((r) => r.bin).join(" → "),
+      items: rows.map(({ name, qty, warehouse, row, bin }) => ({ name, qty, warehouse, row, bin })),
+    });
+  });
+});
+
 // Status Check
 app.get("/api/status", (req, res) => {
   res.json({

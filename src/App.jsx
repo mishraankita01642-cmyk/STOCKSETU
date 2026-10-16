@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 // Backend API
-   const API_URL = "/api";
+const API_URL = "/api";
   import.meta.env.VITE_API_URL || "http://172.25.162.142:5000/api";
 
 function App() {
@@ -14,6 +14,27 @@ function App() {
   const [searchResult, setSearchResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Order lookup
+  const [orderId, setOrderId] = useState("");
+  const [orderResult, setOrderResult] = useState(null);
+  const [orderError, setOrderError] = useState("");
+
+  const lookupOrder = () => {
+    const id = orderId.trim();
+    if (!id) return;
+    setOrderError("");
+    setOrderResult(null);
+
+    fetch(`${API_URL}/orders/${encodeURIComponent(id)}`)
+      .then((res) => {
+        if (res.status === 404) throw new Error("Order not found");
+        if (!res.ok) throw new Error("Server error");
+        return res.json();
+      })
+      .then((data) => setOrderResult(data))
+      .catch((err) => setOrderError(err.message));
+  };
 
   // Load products from backend
   useEffect(() => {
@@ -348,20 +369,49 @@ Track inventory, locate products, and optimize warehouse operations.
 <div className="search-box">
   <input
     type="text"
-    placeholder="Enter Order ID (e.g. ORD-1001)"
+    placeholder="Enter Order ID (e.g. ORD-10001)"
+    value={orderId}
+    onChange={(e) => setOrderId(e.target.value)}
+    onKeyDown={(e) => e.key === "Enter" && lookupOrder()}
   />
-  <button>
+  <button onClick={lookupOrder}>
     Lookup Order
   </button>
 </div>
 
-<div style={{ marginTop: "20px" }}>
-  <p><strong>Order ID:</strong> ORD-1001</p>
-  <p><strong>Items:</strong> Wireless Mouse, Keyboard</p>
-  <p><strong>Warehouse:</strong> WH-01</p>
-  <p><strong>Picking Route:</strong> A02 → B01</p>
-  <p><strong>Status:</strong> Ready for Dispatch</p>
-</div>
+{orderError && (
+  <p style={{ marginTop: "20px", color: "crimson" }}>{orderError}</p>
+)}
+
+{orderResult && (
+  <div style={{ marginTop: "20px", textAlign: "left" }}>
+    <p><strong>Order ID:</strong> {orderResult.order_number}</p>
+    <p><strong>Status:</strong> {orderResult.status}</p>
+    <p><strong>Picking Route:</strong> {orderResult.route}</p>
+    <table style={{ width: "100%", marginTop: "10px", borderCollapse: "collapse" }}>
+      <thead>
+        <tr>
+          <th align="left">Item</th>
+          <th align="left">Qty</th>
+          <th align="left">Warehouse</th>
+          <th align="left">Row</th>
+          <th align="left">Bin</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orderResult.items.map((it, i) => (
+          <tr key={i}>
+            <td>{it.name}</td>
+            <td>{it.qty}</td>
+            <td>{it.warehouse}</td>
+            <td>{it.row}</td>
+            <td>{it.bin}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
 
         </div>
 
